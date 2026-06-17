@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>APS Viewer</title>
+
+  <link rel="stylesheet"
+        href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css">
+
+  <%= stylesheet_link_tag "application" %>
+</head>
+
+<body>
+
+  <div id="header">
+    <select id="models"></select>
+    <button id="upload">Upload</button>
+    <input id="input" type="file" hidden>
+  </div>
+
+  <div id="preview"></div>
+  <div id="overlay"></div>
+
+  <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.js"></script>
+
+  <%= javascript_include_tag "application", defer: true %>
+
+</body>
+</html>
