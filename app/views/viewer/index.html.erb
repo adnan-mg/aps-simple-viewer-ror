@@ -1,28 +1,105 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>APS Viewer</title>
+<div id="header" style="padding:10px;">
+  <select id="models"></select>
+</div>
 
-  <link rel="stylesheet"
-        href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css">
+<div id="preview" style="width:100%; height:90vh;"></div>
 
-  <%= stylesheet_link_tag "application" %>
-</head>
+<link rel="stylesheet"
+      href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css">
 
-<body>
+<script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.js"></script>
 
-  <div id="header">
-    <select id="models"></select>
-    <button id="upload">Upload</button>
-    <input id="input" type="file" hidden>
-  </div>
+<script>
+let viewer;
 
-  <div id="preview"></div>
-  <div id="overlay"></div>
+function getAccessToken(callback) {
+  fetch('/api/auth/token')
+    .then(resp => resp.json())
+    .then(data => {
+      callback(data.access_token, data.expires_in);
+    })
+    .catch(err => console.error(err));
+}
 
-  <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.js"></script>
+function initViewer() {
+  Autodesk.Viewing.Initializer(
+    {
+      env: 'AutodeskProduction',
+      getAccessToken
+    },
+    function () {
 
-  <%= javascript_include_tag "application", defer: true %>
+      viewer = new Autodesk.Viewing.GuiViewer3D(
+        document.getElementById('preview')
+      );
 
-</body>
-</html>
+      viewer.start();
+
+      loadModels();
+    }
+  );
+}
+
+function loadModels() {
+
+  fetch('/api/models')
+    .then(resp => resp.json())
+    .then(models => {
+
+      const dropdown =
+        document.getElementById('models');
+
+      dropdown.innerHTML = '';
+
+      models.forEach(model => {
+
+        const option =
+          document.createElement('option');
+
+        option.value = model.urn;
+        option.text = model.name;
+
+        dropdown.appendChild(option);
+
+      });
+
+      dropdown.onchange = function() {
+        loadModel(this.value);
+      };
+
+      if(models.length > 0) {
+        loadModel(models[0].urn);
+      }
+
+    })
+    .catch(err => console.error(err));
+}
+
+function loadModel(urn) {
+
+  Autodesk.Viewing.Document.load(
+    'urn:' + urn,
+
+    function(doc) {
+
+      const defaultModel =
+        doc.getRoot().getDefaultGeometry();
+
+      viewer.loadDocumentNode(
+        doc,
+        defaultModel
+      );
+
+    },
+
+    function(err) {
+      console.error(err);
+    }
+  );
+}
+
+document.addEventListener(
+  'DOMContentLoaded',
+  initViewer
+);
+</script>
